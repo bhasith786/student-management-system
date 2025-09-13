@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Student Management System</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    input, button { margin: 5px; padding: 8px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid black; padding: 8px; text-align: center; }
+    th { background: #eee; }
+  </style>
+</head>
+<body>
+  <h1>Student Management System</h1>
+  <h3>Search Student</h3>
+  <input id="searchRoll" placeholder="Roll No" type="number">
+  <button onclick="searchStudent()">Search</button>
+  <div id="searchResult"></div>
+
+
+  
+  <h3>Add Student</h3>
+  <input id="name" placeholder="Name">
+  <input id="roll" placeholder="Roll No" type="number">
+  <input id="age" placeholder="Age" type="number">
+  <input id="marks" placeholder="Marks" type="number">
+  <button onclick="addStudent()">Add</button>
+
+  <h3>Update Student</h3>
+  <input id="updateRoll" placeholder="Roll No" type="number">
+  <input id="updateName" placeholder="New Name">
+  <input id="updateAge" placeholder="New Age" type="number">
+  <input id="updateMarks" placeholder="New Marks" type="number">
+  <button onclick="updateStudent()">Update</button>
+
+  <h3>All Students</h3>
+  <button onclick="loadStudents()">Refresh</button>
+  <table id="studentTable">
+    <thead><tr><th>Name</th><th>Roll No</th><th>Age</th><th>Marks</th><th>Action</th></tr></thead>
+    <tbody></tbody>
+  </table>
+
+<script>
+const API_URL = "http://127.0.0.1:5000";
+
+async function loadStudents() {
+  let res = await fetch(`${API_URL}/students`);
+  let data = await res.json();
+  let tbody = document.querySelector("#studentTable tbody");
+  tbody.innerHTML = "";
+  data.forEach(s => {
+    let row = `<tr>
+      <td>${s.name}</td>
+      <td>${s.roll_no}</td>
+      <td>${s.age}</td>
+      <td>${s.marks}</td>
+      <td><button onclick="deleteStudent(${s.roll_no})">Delete</button></td>
+    </tr>`;
+    tbody.innerHTML += row;
+  });
+}
+async function searchStudent() {
+  let roll_no = parseInt(document.getElementById("searchRoll").value);
+  let res = await fetch(`${API_URL}/student/${roll_no}`);
+  
+  if (res.ok) {
+    let student = await res.json();
+    document.getElementById("searchResult").innerHTML =
+      `Name: ${student.name}, Roll: ${student.roll_no}, Age: ${student.age}, Marks: ${student.marks}`;
+  } else {
+    document.getElementById("searchResult").innerHTML = "Student not found!";
+  }
+}
+
+
+async function addStudent() {
+  let student = {
+    name: document.getElementById("name").value,
+    roll_no: parseInt(document.getElementById("roll").value),
+    age: parseInt(document.getElementById("age").value),
+    marks: parseInt(document.getElementById("marks").value),
+  };
+  await fetch(`${API_URL}/student`, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(student)
+  });
+  loadStudents();
+}
+async function updateStudent() {
+  let roll_no = parseInt(document.getElementById("updateRoll").value);
+  let student = {
+    name: document.getElementById("updateName").value,
+    age: parseInt(document.getElementById("updateAge").value),
+    marks: parseInt(document.getElementById("updateMarks").value),
+  };
+
+  await fetch(`${API_URL}/student/${roll_no}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(student),
+  });
+  loadStudents();
+}
+
+
+async function deleteStudent(roll_no) {
+  await fetch(`${API_URL}/student/${roll_no}`, { method: "DELETE" });
+  loadStudents();
+}
+
+loadStudents();
+</script>
+</body>
+</html>
